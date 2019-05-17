@@ -45,7 +45,7 @@ class Data_Prepare(object):
         # 利用jieba进行分词
         words = ' '.join(jieba.cut(text)).split(" ")
         # 不分词
-        words = [x for x in ''.join(words)]
+        #words = [x for x in ''.join(words)]
         return ' '.join(words)
 
     def build_vocab(self, sentences, path):
@@ -58,4 +58,5 @@ class Data_Prepare(object):
 
 if __name__ == '__main__':
     data_pre = Data_Prepare()
-    data_pre.readfile('data/train.txt')
+    print(data_pre.pre_processing("今天天气不错"))
+    #data_pre.readfile('data/train.txt')

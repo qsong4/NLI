@@ -1,3 +1,4 @@
+import os,sys
 import tensorflow as tf
 import data_prepare
 from tensorflow.contrib import learn
@@ -20,17 +21,16 @@ class TrainModel(object):
         保存模型
     '''
     def pre_processing(self):
-        train_texta, train_textb, train_tag = data_pre.readfile(parent_path+'/data/train.txt')
+        train_texta, train_textb, train_tag = data_pre.readfile(con.train_data)
         data = []
         data.extend(train_texta)
         data.extend(train_textb)
-        data_pre.build_vocab(data, parent_path+'/save_model' + '/abcnn/vocab.pickle')
+        data_pre.build_vocab(data, con.vocab_path)#对一个数据集只需要运行一次
         # 加载词典
-        self.vocab_processor = learn.preprocessing.VocabularyProcessor.restore(parent_path+'/save_model/abcnn' +
-                                                                               '/vocab.pickle')
+        self.vocab_processor = learn.preprocessing.VocabularyProcessor.restore(con.vocab_path)
         train_texta_embedding = np.array(list(self.vocab_processor.transform(train_texta)))
         train_textb_embedding = np.array(list(self.vocab_processor.transform(train_textb)))
-
+        print(train_texta_embedding.shape)
         dev_texta, dev_textb, dev_tag = data_pre.readfile(parent_path+'/data/dev.txt')
         dev_texta_embedding = np.array(list(self.vocab_processor.transform(dev_texta)))
         dev_textb_embedding = np.array(list(self.vocab_processor.transform(dev_textb)))
@@ -51,9 +51,9 @@ class TrainModel(object):
         # 定义训练用的循环神经网络模型
         with tf.variable_scope('model', reuse=None):
             # abcnn
-            model = abcnn_mdoel.ABCNN(True, len(train_texta_embedding[0]), 3, con.l2_lambda,
-                                      'ABCNN2', vocabulary_size=len(self.vocab_processor.vocabulary_),
-                                      d0=con.embedding_size, di=50, num_classes=2, num_layers=2)
+            model = abcnn_mdoel.ABCNN(True, con.lr, len(train_texta_embedding[0]), 4, con.l2_lambda,
+                                      'ABCNN3', vocabulary_size=len(self.vocab_processor.vocabulary_),
+                                      d0=con.embedding_size, di=128, num_classes=2, num_layers=2)
 
         # 训练模型
         session_conf = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
@@ -62,6 +62,7 @@ class TrainModel(object):
             tf.global_variables_initializer().run()
             saver = tf.train.Saver()
             best_f1 = 0.0
+            patient = 0
             for time in range(con.epoch):
                 print("training " + str(time + 1) + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
                 model.is_trainning = True
@@ -113,8 +114,13 @@ class TrainModel(object):
 
                 if f1 > best_f1:
                     best_f1 = f1
-                    saver.save(sess, parent_path + "/save_model/abcnn/model.ckpt")
+                    saver.save(sess, parent_path + con.model_path)
                     print("Saved model success\n")
+                else:
+                    patient += 1
+                    if patient >= 3:
+                        print("early stopping $d epochs without improvement"%time)
+                        break
 
 
 if __name__ == '__main__':
