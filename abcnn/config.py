@@ -1,13 +1,15 @@
 class Config(object):
 
     def __init__(self):
-        self.embedding_size = 50  # 词向量维度
-        self.hidden_num = 100  # 隐藏层规模
-        self.l2_lambda = 0.01
-        self.learning_rate = 0.001
-        self.dropout_keep_prob = 0.5
-        self.attn_size = 200
+        self.embedding_size = 128  # 词向量维度
+        self.l2_lambda = 0.004
+        self.lr = 0.05
         self.K = 2
 
         self.epoch = 20
-        self.Batch_Size = 50
+        self.Batch_Size = 256
+
+        self.train_data = "data/train.txt"
+        self.dev_data = "data/dev.txt"
+        self.vocab_path = "save_model/abcnn/vocab.pickle"
+        self.model_path = "/abcnn/save_model/abcnn/"
